@@ -1,23 +1,54 @@
 import React from "react"
-import {MdDashboard} from 'react-icons/md'
-import {FaUsersCog} from 'react-icons/fa'
-import {IoIosSubway} from 'react-icons/io'
+import {GrMapLocation} from 'react-icons/gr'
+import {BiBus} from 'react-icons/bi'
 import {AiOutlineRollback} from 'react-icons/ai'
-export default function Dashboard(){
-    const [page,setPage] = React.useState("inicio");
-    const menus = [
-        { name: "Dashboard", link: "inicio",icon: MdDashboard },
-        { name: "Usuarios", link: "usuarios",icon: FaUsersCog  },
-        { name: "Rutas", link: "rutas",icon: IoIosSubway},
-        { name: "Regresar",link: "/",icon: AiOutlineRollback},
-      ];
+import {MdOutlineAccessTimeFilled} from 'react-icons/md'
+import data from '../../../data'
+import Buses from "./Buses"
+import Horas from "./Horas"
+import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import useUserContext from "../../../hooks/useUser";
+import Spinner from "../spinner/spinner"
+import Swal from "sweetalert2"
 
+
+export default function Dashboard(){
+
+    const {userLog,setUserLog} = useUserContext();
+
+    const [page,setPage] = React.useState("inicio");
+    const [loading,setLoading] = React.useState(true)
+    const menus = [
+        { name: "Rutas", link: "inicio",icon: BiBus },
+        { name: "Horas", link: "horas",icon: MdOutlineAccessTimeFilled  },
+        { name: "Volver al mapa",link: "/",icon: GrMapLocation},
+      ];
+      const navigateTo = useNavigate();
+
+      React.useEffect(()=>{
+        if(userLog === ''){
+          Swal.fire({
+            title:'Error',
+            icon:'error',
+            text:'Hubo un error al ingresar'
+          }).then(function(si){ 
+            window.location.replace('/')
+          }
+          )
+        }
+        else{
+          setLoading(false)
+        }
+        
+      },[])
 
     return(
-        <>
-            <div className="flex gap-6">
+      <>
+        {!loading ? (<div>
+             <div className="flex gap-6">
                 <div
-                  className={`bg-red-500 border shadow-lg min-h-screen fixed md:w-72 w-16  duration-300 text-gray-900 px-4`}
+                  className={`  bg-red-600 rounded-r-xl shadow-xl shadow-black min-h-screen fixed md:w-72 w-16  duration-300 text-gray-900 px-4`}
                 >
                   <div className="mt-4 flex flex-col gap-4 relative">
                     {menus?.map((menu, i) => (
@@ -26,22 +57,17 @@ export default function Dashboard(){
                             key={i}
                             className={` ${
                               menu?.margin && "mt-5" 
-                            } ${page === menu?.link && "bg-white duration-75"}
+                            } ${page === menu?.link && "backdrop-blur-2xl bg-white/80 duration-75"}
 
-                              group hover:bg-gray-100 flex items-center text-sm  gap-3.5 font-medium p-3 hover:text-dark rounded-md cursor-pointer`}
+                              group hover:backdrop-blur-2xl hover:bg-white/80 flex items-center text-sm  gap-3.5 font-medium p-3 hover:text-dark rounded-md cursor-pointer`}
                             onClick={()=>{
                               setPage(menu?.link)
                             }}
                           >
                             <div>{React.createElement(menu?.icon, { size: "20" })}</div>
                             <h2
-                              className={`duration-200 opacity-0 md:opacity-100  overflow-hidden`}
+                              className={`duration-200 opacity-100 overflow-hidden`}
                             >
-                              {menu?.name}
-                            </h2>
-                            <h2
-                              className={`md:hidden absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
-                              >
                               {menu?.name}
                             </h2>
                           </div>
@@ -50,13 +76,17 @@ export default function Dashboard(){
                 </div>
               </div>
 
-            <div className='md:ml-72 ml-16 text-7xl max-h-screen p-4'>
 
-                {page === 'inicio' && <>Hola</>}
-                {page === '/' && window.location.replace('/')}
+              <div className='ml-72 max-h-screen p-4'>
 
-            </div>
-             
-        </>
+                {page === 'inicio' && <Buses/>}
+                {page === 'horas' && <Horas/>}
+                {page === '/' ? (navigateTo('/')) : null}
+
+              </div>
+
+        </div>) : (<> <Spinner></Spinner></>)}
+      </>
+        
     )
 }

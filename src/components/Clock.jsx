@@ -10,8 +10,8 @@ import data from '../../data';
 
 function Clock() {
 
-
-  const [time, setTime] = useState(new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', hour12: true}));
+  const now = new Date()
+  const [time, setTime] = useState();
   const [showInfo,setShowInfo] = useState(false)
   const [nextStop,setNextStop] = useState({})
 
@@ -19,71 +19,45 @@ function Clock() {
     const currentTime = new Date();
     const currentTimeInMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
 
-    let nearestTimeInMinutes = Infinity;
-    let nearestTime = '';
-    let id = 0
-    let coordenadas = []
-    data.forEach(function(i) {
-      const parts = i.hora.split(':');
-      let hours = parseInt(parts[0]);
-      const minutes = parseInt(parts[1].split(' ')[0]);
-      const ampm = parts[1].split(' ')[1];
+    
 
-      if (ampm === 'PM' && hours !== 12) {
-        hours += 12;
+    let busProximo = null;
+    let tiempoMinimo = Infinity;
+
+    data.forEach(bus => {
+      const horaBus = bus.hora;
+      const tiempo = (new Date(`2000-01-01T${horaBus}:00`) - new Date(`2000-01-01T${time}:00`)) / 1000 / 60;
+      if (tiempo >= 0 && tiempo < tiempoMinimo) {
+        tiempoMinimo = tiempo;
+        busProximo = bus;
       }
-      if (ampm === 'AM' && hours === 12) {
-        hours = 0;
-      }
+    });
 
-      const timeInMinutes = hours * 60 + minutes;
-      // const formattedTimeString = `${hours}:${minutes} ${ampm}`;
+    if(busProximo){
+      setNextStop({
+        id:busProximo.busid,
+        hora:busProximo.hora,
+        coordenadas:busProximo.coordenadas
+      })
+    }else{
+      setNextStop({
+        id:1,
+        hora:'05:00',
+        coordenadas:[4.1339803896157195, -73.61317519238939]
+      })
+    }
 
-      if (timeInMinutes > currentTimeInMinutes && timeInMinutes < nearestTimeInMinutes) {
-        nearestTimeInMinutes = timeInMinutes;
+    // Encontrar la próxima hora
 
-        let formattedHours = hours;
-        let formattedAMPM = 'AM';
-        if (hours === 0) {
-          formattedHours = 12;
-        } else if (hours >= 12) {
-          formattedHours = hours % 12;
-          formattedAMPM = 'PM';
-        }
-      
-        nearestTime = `${formattedHours}:${minutes} ${formattedAMPM}`;
-        id = i.busid;
-        coordenadas = i.coordenadas
-      }
-
-      // if (timeInMinutes > currentTimeInMinutes) {
-      //   return {
-      //     id: i.busid,
-      //     hora: formattedTimeString
-      //   }
-      //   };
-      });
-
-      if(nearestTime){
-        setNextStop({
-          id,
-          hora:nearestTime,
-          coordenadas
-        })
-      }else{
-        setNextStop({
-          id:1,
-          hora:'05:00 AM',
-          coordenadas:[4.1339803896157195, -73.61317519238939]
-        })
-      }
 
   }
   
 
   useEffect(() => {
+    
     const intervalId = setInterval(() => {
-        setTime(new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', hour12: true}));
+        const horaActual = `${now.getHours()}:${now.getMinutes()}`;
+        setTime(horaActual);
     }, 1000);
 
      hora()

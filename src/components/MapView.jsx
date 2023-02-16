@@ -8,8 +8,11 @@ import L from "leaflet";
 import Spinner from './spinner/spinner';
 import ButtonOptions from './auth/Button';
 
+import useUserContext from "../../hooks/useUser";
+
 
 import Swal from 'sweetalert2';
+import Welcome from './auth/Welcome';
 
 const myIcon = L.icon({
     iconUrl: "https://icones.pro/wp-content/uploads/2021/02/icone-de-broche-de-localisation-rouge.png",
@@ -19,6 +22,7 @@ const myIcon = L.icon({
   });
 
 export default function MapView() {
+    const {userLog,setUserLog} = useUserContext();
     
     
     const [modal,setModal] = React.useState(false)
@@ -68,6 +72,9 @@ export default function MapView() {
       }, []);
 
       
+    
+
+      
       
 
     if (position[0] === 0) return(<Spinner/>)
@@ -75,10 +82,12 @@ export default function MapView() {
         <>
             
             <div className='md:w-1/2 h-screen'>
+                {userLog !== '' && (<Welcome name={userLog}/>)}
                 <ButtonOptions/>
                 <Clock/>
                 
-                <MapContainer center={position} zoom={20}>
+                <MapContainer center={position} zoom={17}>
+                  
                     
                     <TileLayer
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

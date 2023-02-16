@@ -1,13 +1,19 @@
 import React from "react";
 import {HiUser} from 'react-icons/hi'
 import {ImUserPlus} from 'react-icons/im'
-import {FaUserCircle} from 'react-icons/fa'
+import {FaUserCircle,FaUserEdit} from 'react-icons/fa'
 import {AiOutlinePlus} from 'react-icons/ai'
-import {HiUserGroup} from 'react-icons/hi'
+import {HiUserGroup,HiOutlineLogout} from 'react-icons/hi'
 import validator from "validator";
-
+import useUserContext from "../../../hooks/useUser";
+import { Link } from 'react-router-dom';
+import Swal from "sweetalert2";
 
 export default function ButtonOptions() {
+    
+    const {userLog,setUserLog} = useUserContext();
+
+
     const [showButtons, setShowButtons] = React.useState(false);
     const [loginModal,setLoginModal] = React.useState(false);
     const [registerModal,setRegisterModal] = React.useState(false);
@@ -17,6 +23,30 @@ export default function ButtonOptions() {
         'error':false
     })
  
+    
+    const logout = () => {
+        setUserLog('')
+        setShowButtons(false)
+
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'bottom',
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+              toast.addEventListener('mouseenter', Swal.stopTimer)
+              toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+          })
+          
+          Toast.fire({
+            icon: 'success',
+            title: 'Sesión cerrada correctamente'
+          })
+
+          localStorage.removeItem('user')
+    }
 
     const handleForm = (e) => {
         e.preventDefault()
@@ -24,7 +54,39 @@ export default function ButtonOptions() {
             "user":e.target.elements.email.value,
             "password":e.target.elements.password_user.value
         }
-        console.log(jsonData)
+        
+        if(jsonData.user !== 'user@com' || jsonData.password !== '1234'){
+            setMessageModal({
+                'message':'Las credenciales no son correctas',
+                'form':'login',
+                'error':true
+            })
+            return
+        }
+
+        setUserLog(jsonData.user)
+        setLoginModal(false)
+        setShowButtons(false)
+
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'bottom',
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+              toast.addEventListener('mouseenter', Swal.stopTimer)
+              toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+          })
+          
+          Toast.fire({
+            icon: 'success',
+            title: 'Inicio de sesión exitoso'
+          })
+
+          localStorage.setItem('user',jsonData.user)
+
     }
 
     const handleFormRegister = (e) => {
@@ -74,15 +136,16 @@ export default function ButtonOptions() {
     return(
         <>
             
-            <button
+                <button
                 className="fixed bottom-0 right-0 mb-5 mr-5 p-3 bg-red-500 rounded-full w-12 h-12 text-white hover:bg-red-600 focus:outline-none focus:shadow-outline z-10 hover:bg-white border-2 border-white hover:text-black hover:bg-white hover:border-black hover:border-2 hover:text-black flex justify-center items-center text-center"
                 onClick={() => setShowButtons(!showButtons)}
             >
                 <AiOutlinePlus className="w-full h-full" />
             </button>
+            
 
             
-            {showButtons && (
+            {showButtons && userLog === '' ? (
             <div className="fixed flex flex-col bottom-0 right-0 mr-5 m-16 z-10">
                 <button 
                     className="items-center p-3 justify-center bg-red-500 rounded-full text-white mb-2 hover:bg-red-600 focus:outline-none focus:shadow-outline z-10 border-white border-2 hover:bg-white hover:border-black hover:border-2 hover:text-black"
@@ -97,7 +160,27 @@ export default function ButtonOptions() {
                     <HiUser className="w-6 h-6"/>
                 </button>
             </div>
-            )}
+
+            
+            ) : showButtons && userLog !== '' ? (
+
+                <div className="fixed flex flex-col bottom-0 right-0 mr-5 m-16 z-10">
+                    <button 
+                        className="items-center p-3 justify-center bg-red-500 rounded-full text-white mb-2 hover:bg-red-600 focus:outline-none focus:shadow-outline z-10 border-white border-2 hover:bg-white hover:border-black hover:border-2 hover:text-black"
+                        onClick={()=>{logout()}}
+                    >
+                        <HiOutlineLogout className="w-6 h-6"/>
+                    </button>
+                    <Link to="/dashboard">
+                        <button
+                            className="items-center p-3 justify-center bg-red-500 rounded-full text-white mb-2 hover:bg-red-600 focus:outline-none focus:shadow-outline z-10 hover:bg-white border-white border-2 hover:border-black hover:border-2 hover:text-black"                        
+                        >
+                            <FaUserEdit className="w-6 h-6" />
+                        </button>
+                    </Link>
+                </div>
+                
+            ) : null}
 
             {loginModal && (
                 <div className="fixed bottom-0 inset-x-0 px-3 pb-4 sm:inset-0 sm:flex sm:items-center sm:justify-center z-10">
