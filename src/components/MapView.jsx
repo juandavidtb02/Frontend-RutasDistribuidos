@@ -22,6 +22,13 @@ const myIcon = L.icon({
     popupAnchor: [0, -33]
   });
 
+const myIconParadero = L.icon({
+  iconUrl:"https://cdn-icons-png.flaticon.com/512/6339/6339264.png",
+  iconSize: [41, 43],
+  iconAnchor: [12.5, 23],
+  popupAnchor: [0, -33]
+})
+
 export default function MapView() {
   const now = new Date()
 
@@ -102,7 +109,7 @@ export default function MapView() {
         });
 
         if(busProximo){
-          return busProximo.hora
+          return busProximo.hour_name
         }else{
           const earliestHour = array.sort((a, b) => {
             const aDate = new Date(`1970-01-01T${a.hour_name}`);
@@ -153,8 +160,12 @@ export default function MapView() {
                             <React.Fragment key={index}>
                               {item.locations.map((it, i) => (
                                 <div key={i}>
-                                  <Marker position={[it?.latitude,it?.longitude]} eventHandlers={{ click: (e) => setModal(true) }}>
-                                    <Popup>{calculateNextStop(item?.hours)} - {it?.location_name} </Popup>
+                                  <Marker position={[it?.latitude,it?.longitude]}  icon={myIconParadero}>
+                                    <Popup>
+                                      <p>Ruta: {item?.bus_name}</p>
+                                      <p>Paradero: {it?.location_name}</p>
+                                      <p>Proxima hora: {calculateNextStop(item?.hours)}</p>
+                                    </Popup>
                                   </Marker>
                                 </div>
                               ))}
