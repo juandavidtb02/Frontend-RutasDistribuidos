@@ -4,16 +4,19 @@ import {ImUserPlus} from 'react-icons/im'
 import {FaUserCircle,FaUserEdit} from 'react-icons/fa'
 import {AiOutlinePlus} from 'react-icons/ai'
 import {HiUserGroup,HiOutlineLogout} from 'react-icons/hi'
-import validator from "validator";
+import SpinnerWhite from "../spinner/SpinnerForms";
 import useUserContext from "../../../hooks/useUser";
 import { Link } from 'react-router-dom';
 import Swal from "sweetalert2";
 
 export default function ButtonOptions() {
+
+    const URL= import.meta.env.VITE_HOST + "/register"
+    const URL2= import.meta.env.VITE_HOST + "/login"
     
     const {userLog,setUserLog} = useUserContext();
 
-
+    const [loading,setLoading] = React.useState(false)
     const [showButtons, setShowButtons] = React.useState(false);
     const [loginModal,setLoginModal] = React.useState(false);
     const [registerModal,setRegisterModal] = React.useState(false);
@@ -48,52 +51,79 @@ export default function ButtonOptions() {
           localStorage.removeItem('user')
     }
 
-    const handleForm = (e) => {
+    const handleForm = async (e) => {
         e.preventDefault()
         const jsonData = {
-            "user":e.target.elements.email.value,
+            "email":e.target.elements.email.value,
             "password":e.target.elements.password_user.value
         }
         
-        if(jsonData.user !== 'user@com' || jsonData.password !== '1234'){
+
+        
+        try{
+            setLoading(true)
+            const response = await fetch(URL2,{
+                method:'POST',
+                body: JSON.stringify(jsonData),
+                headers: {
+                    "Content-Type": 'application/json'
+                }
+            })
+            const data = await response.json()
+
+            if(response.status !== 200) throw new Error(data.detail)
+
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'bottom',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                  toast.addEventListener('mouseenter', Swal.stopTimer)
+                  toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            })
+              
+            Toast.fire({
+                icon: 'success',
+                title: 'Inicio exitoso'
+            })
+            
             setMessageModal({
-                'message':'Las credenciales no son correctas',
+                'message':'',
+                'form':'',
+                'error':false
+            })
+
+            setUserLog(data)
+            setLoginModal(false)
+            setShowButtons(false)
+            
+            localStorage.setItem('user',JSON.stringify(data))
+            
+            
+        }catch(error){
+            console.log(error)
+            setMessageModal({
+                'message':error,
                 'form':'login',
                 'error':true
             })
-            return
+            
         }
-
-        setUserLog(jsonData.user)
-        setLoginModal(false)
-        setShowButtons(false)
-
-        const Toast = Swal.mixin({
-            toast: true,
-            position: 'bottom',
-            showConfirmButton: false,
-            timer: 2000,
-            timerProgressBar: true,
-            didOpen: (toast) => {
-              toast.addEventListener('mouseenter', Swal.stopTimer)
-              toast.addEventListener('mouseleave', Swal.resumeTimer)
-            }
-          })
-          
-          Toast.fire({
-            icon: 'success',
-            title: 'Inicio de sesión exitoso'
-          })
-
-          localStorage.setItem('user',jsonData.user)
-
+        setLoading(false)
+        
+        
+        
+        
     }
 
-    const handleFormRegister = (e) => {
+    const handleFormRegister = async (e) => {
         e.preventDefault()
         const jsonData = {
             "name":e.target.elements.name.value,
-            "user":e.target.elements.email.value,
+            "email":e.target.elements.email.value,
             "password":e.target.elements.password_user.value,
             "password_confirm":e.target.elements.password_confirm.value
 
@@ -108,16 +138,66 @@ export default function ButtonOptions() {
             return
         }
 
-        if(!validator.isStrongPassword(jsonData.password,{
-            minLength:5,minLowercase:1,minUppercase:1,minNumbers:1
-        })){
+        let role = 'usuario'
+
+        if(jsonData.email === 'admin@admin'){
+            role = 'admin'
+        }
+
+        const json = {
+            "name":jsonData.name,
+            "email":jsonData.email,
+            "password":jsonData.password,
+            "role":role
+        }
+
+
+        try{
+            setLoading(true)
+            const response = await fetch(URL,{
+                method:'POST',
+                body: JSON.stringify(json),
+                headers: {
+                    "Content-Type": 'application/json'
+                }
+            })
+            const data = await response.json()
+
+            if(response.status !== 200) throw new Error(data.detail)
+
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'bottom',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                  toast.addEventListener('mouseenter', Swal.stopTimer)
+                  toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+              })
+              
+              Toast.fire({
+                icon: 'success',
+                title: 'Registro exitoso'
+              })
+            setRegisterModal(false)
             setMessageModal({
-                'message':'La contraseña debe contener: Minimo 5 caracteres, una mayuscula y una minuscula.',
+                'message':'',
+                'form':'',
+                'error':false
+            })
+
+
+        }catch(error){
+            setMessageModal({
+                'message':'Error al crear cuenta',
                 'form':'register',
                 'error':true
             })
-            return
+            
         }
+        setLoading(false)
 
 
 
@@ -171,13 +251,13 @@ export default function ButtonOptions() {
                     >
                         <HiOutlineLogout className="w-6 h-6"/>
                     </button>
-                    <Link to="/dashboard">
+                    {userLog.role === 'admin' && (<Link to="/dashboard">
                         <button
                             className="items-center p-3 justify-center bg-red-500 rounded-full text-white mb-2 hover:bg-red-600 focus:outline-none focus:shadow-outline z-10 hover:bg-white border-white border-2 hover:border-black hover:border-2 hover:text-black"                        
                         >
                             <FaUserEdit className="w-6 h-6" />
                         </button>
-                    </Link>
+                    </Link>)}
                 </div>
                 
             ) : null}
@@ -194,7 +274,7 @@ export default function ButtonOptions() {
                         <div>
                             <div className="flex flex-col items-center">
                                 <h3 className="text-lg leading-6 font-medium text-gray-900 text-center">Iniciar sesión</h3>
-                                <FaUserCircle className="w-9 h-9 mt-2" />
+                                {loading ? <SpinnerWhite/> : (<FaUserCircle className="w-9 h-9 mt-2" />)}
                             </div>
                             <div className="mt-2">
                             {messageModal.form === 'login' && (<div className={`${messageModal.error ? 'bg-red-500 text-white' : 'bg-green-400 text-white' } p-3 w-full rounded-xl grid col-span-2 max-w-sm mb-3`}>{messageModal.message}</div>) }
@@ -286,7 +366,7 @@ export default function ButtonOptions() {
                         <div>
                             <div className="flex flex-col items-center">
                                 <h3 className="text-lg leading-6 font-medium text-gray-900 text-center">Crear una cuenta</h3>
-                                <HiUserGroup className="w-9 h-9 mt-2" />
+                                {loading ? <SpinnerWhite/> : (<HiUserGroup className="w-9 h-9 mt-2" />)}
                             </div>
                             <div className="mt-2">
                             {messageModal.form === 'register' && (<div className={`${messageModal.error ? 'bg-red-500 text-white' : 'bg-green-400 text-white' } p-3 w-full rounded-xl grid col-span-2 max-w-sm mb-3`}>{messageModal.message}</div>) }

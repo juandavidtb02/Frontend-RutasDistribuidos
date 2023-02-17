@@ -6,6 +6,7 @@ import {GiBusStop} from 'react-icons/gi'
 import {BiRun} from 'react-icons/bi'
 import data from '../../data';
 
+import useLocationContext from '../../hooks/useLocationContext';
 
 
 function Clock() {
@@ -14,39 +15,42 @@ function Clock() {
   const [time, setTime] = useState();
   const [showInfo,setShowInfo] = useState(false)
   const [nextStop,setNextStop] = useState({})
+  const {location,setLocation} = useLocationContext();
 
   function hora(){
-    const currentTime = new Date();
-    const currentTimeInMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-
     
+    const currentTime = new Date();
 
-    let busProximo = null;
-    let tiempoMinimo = Infinity;
+    if(location !== undefined){
+      let busProximo = null;
+      let tiempoMinimo = Infinity;
 
-    data.forEach(bus => {
-      const horaBus = bus.hora;
-      const tiempo = (new Date(`2000-01-01T${horaBus}:00`) - new Date(`2000-01-01T${time}:00`)) / 1000 / 60;
-      if (tiempo >= 0 && tiempo < tiempoMinimo) {
-        tiempoMinimo = tiempo;
-        busProximo = bus;
+      location.forEach(bus => {
+        bus.hours.forEach(hours => {
+          const horaBus = hours.hour_name;
+          const tiempo = (new Date(`2000-01-01T${horaBus}:00`) - new Date(`2000-01-01T${time}:00`)) / 1000 / 60;
+          if (tiempo >= 0 && tiempo < tiempoMinimo) {
+            tiempoMinimo = tiempo;
+            busProximo = bus;
+          }
+        })
+      });
+
+      if(busProximo){
+        setNextStop({
+          id:busProximo.busid,
+          hora:busProximo.hora,
+          coordenadas:busProximo.coordenadas
+        })
+      }else{
+        setNextStop({
+          id:1,
+          hora:'05:00',
+          coordenadas:[4.1339803896157195, -73.61317519238939]
+        })
       }
-    });
 
-    if(busProximo){
-      setNextStop({
-        id:busProximo.busid,
-        hora:busProximo.hora,
-        coordenadas:busProximo.coordenadas
-      })
-    }else{
-      setNextStop({
-        id:1,
-        hora:'05:00',
-        coordenadas:[4.1339803896157195, -73.61317519238939]
-      })
     }
-
     // Encontrar la próxima hora
 
 
@@ -69,7 +73,7 @@ function Clock() {
 
 
 
-  }, []);
+  }, [location]);
 
 
 
@@ -97,11 +101,11 @@ function Clock() {
               <p>Proxima parada: {nextStop.hora}</p>
             </div>
 
-            <div className='flex items-center p-2'>
+            {/* <div className='flex items-center p-2'>
               <GiBusStop className='mr-2 w-8 h-8'/>
-              <p>Parada: {nextStop.id}</p>
+              <p>Parada más cercana: </p><button className='pl-4 pr-4 pt-2 pb-2 bg-sky-700 rounded-xl text-center ml-3'>Ir</button>
               
-            </div>
+            </div> */}
 
             
             

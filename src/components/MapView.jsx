@@ -7,9 +7,10 @@ import data from '../../data';
 import L from "leaflet";
 import Spinner from './spinner/spinner';
 import ButtonOptions from './auth/Button';
+import GoToPoint from './GoToPoint';
 
 import useUserContext from "../../hooks/useUser";
-
+import useLocationContext from '../../hooks/useLocationContext';
 
 import Swal from 'sweetalert2';
 import Welcome from './auth/Welcome';
@@ -22,12 +23,17 @@ const myIcon = L.icon({
   });
 
 export default function MapView() {
+  const now = new Date()
+
     const {userLog,setUserLog} = useUserContext();
-    
-    
-    const [modal,setModal] = React.useState(false)
-    
+    const {location,setLocation} = useLocationContext();
+  
+  
+    const [time, setTime] = React.useState();
+    const [modal,setModal] = React.useState(false);
     const [position, setPosition] = React.useState([0,0]);
+
+    
     
     
     const alertModal = (message,icon) => {
@@ -48,7 +54,17 @@ export default function MapView() {
             title: message
           })
     }
-    
+    React.useEffect(()=>{
+      const intervalId = setInterval(() => {
+        const horaActual = `${now.getHours()}:${now.getMinutes()}`;
+        setTime(horaActual);
+      }, 1000);
+
+      return () => {
+        clearInterval(intervalId);
+      };
+    },[])
+
     React.useEffect(() => {
         if (navigator.permissions) {
           navigator.permissions.query({ name: 'geolocation' }).then(result => {
@@ -71,24 +87,50 @@ export default function MapView() {
         }
       }, []);
 
-      
-    
+      const calculateNextStop = (array) => {
+        
+        let busProximo = null;
+        let tiempoMinimo = Infinity;
 
-      
-      
+        array.forEach(bus => {
+          const horaBus = bus.hour_name;
+          const tiempo = (new Date(`2000-01-01T${horaBus}:00`) - new Date(`2000-01-01T${time}:00`)) / 1000 / 60;
+          if (tiempo >= 0 && tiempo < tiempoMinimo) {
+            tiempoMinimo = tiempo;
+            busProximo = bus;
+          }
+        });
+
+        if(busProximo){
+          return busProximo.hora
+        }else{
+          const earliestHour = array.sort((a, b) => {
+            const aDate = new Date(`1970-01-01T${a.hour_name}`);
+            const bDate = new Date(`1970-01-01T${b.hour_name}`);
+            return aDate - bDate;
+          })[0];
+          if(earliestHour !== undefined){
+            return earliestHour.hour_name
+          }
+          else{
+            return "05:00"
+          }
+        }
+      }
 
     if (position[0] === 0) return(<Spinner/>)
     return (
         <>
-            
+                  
             <div className='md:w-1/2 h-screen'>
-                {userLog !== '' && (<Welcome name={userLog}/>)}
+                {userLog !== '' && (<Welcome name={userLog.name}/>)}
                 <ButtonOptions/>
                 <Clock/>
+                <GoToPoint/> 
                 
                 <MapContainer center={position} zoom={17}>
                   
-                    
+
                     <TileLayer
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -102,23 +144,27 @@ export default function MapView() {
                                 Tu ubicación actual
                             </Popup>
                     </Marker>
-                    {data?.map((item,index)=>(
-                        <div key={index}>
-                            
-                                <Marker position={item?.coordenadas}
-                                    eventHandlers={{
-                                        click: (e) => {
-                                            setModal(true)
-                                        },
-                                    }} 
-                                >
-                                    <Popup>
-                                        {item?.hora}
-                                    </Popup>
-                                    
-                                </Marker>
-                        </div>
-                    ))} 
+
+                    {(()=>{
+                      if(location !== undefined){
+                        return(
+                          <>
+                          {location.map((item, index) => (
+                            <React.Fragment key={index}>
+                              {item.locations.map((it, i) => (
+                                <div key={i}>
+                                  <Marker position={[it?.latitude,it?.longitude]} eventHandlers={{ click: (e) => setModal(true) }}>
+                                    <Popup>{calculateNextStop(item?.hours)} - {it?.location_name} </Popup>
+                                  </Marker>
+                                </div>
+                              ))}
+                            </React.Fragment>
+                          ))}
+                          </>
+                        )
+                      }
+                    })()}
+
                 </MapContainer>     
             </div>
                            

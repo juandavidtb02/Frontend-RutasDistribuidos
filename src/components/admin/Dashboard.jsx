@@ -27,7 +27,7 @@ export default function Dashboard(){
       const navigateTo = useNavigate();
 
       React.useEffect(()=>{
-        if(userLog === ''){
+        if(userLog === '' && userLog.role !== 'admin'){
           Swal.fire({
             title:'Error',
             icon:'error',

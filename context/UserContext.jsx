@@ -7,7 +7,7 @@ const UserProvider = ({children}) => {
 
     React.useEffect(()=>{
         const token = localStorage.getItem('user')
-        if(token !== null)setUserLog(token)
+        if(token !== null)setUserLog(JSON.parse(token))
         
     },[])
 
