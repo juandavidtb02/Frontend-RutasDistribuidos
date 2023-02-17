@@ -17,12 +17,10 @@ const LocationProvider = ({children}) => {
           if(status !== 200)throw new Error(datax)
           if(datax.length > 0){
             setLocation(datax)
-            console.log(datax)
           }
 
       }).catch(function(error){
           console.log(error)
-            setLocation(data)
         })
     },[])
 
