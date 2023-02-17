@@ -9,71 +9,88 @@ import data from '../../data';
 import useLocationContext from '../../hooks/useLocationContext';
 
 
-function Clock() {
+function Clock({hora,time}) {
 
   const now = new Date()
-  const [time, setTime] = useState();
+  // const [time, setTime] = useState();
   const [showInfo,setShowInfo] = useState(false)
-  const [nextStop,setNextStop] = useState({})
+  const [nextStop,setNextStop] = useState([])
   const {location,setLocation} = useLocationContext();
+  const [horas,setHoras] = useState([])
+  const URLH = import.meta.env.VITE_HOST + "/hours"
 
-  function hora(){
+  React.useEffect(()=>{
+    let status = 0
+    let data = []
     
-    const currentTime = new Date();
 
-    if(location !== undefined){
+    const response = fetch(URLH,{
+        method:'GET'
+    }).then(function(res){
+        status = res.status
+
+        return res.json();
+    }).then(function(datax){
+        if(status !== 200)throw new Error(datax)
+        if(datax.length > 0){
+          setHoras(datax)
+        }
+
+    }).catch(function(error){
+        console.log(error)
+      })
+    
+
+    
+    
+  },[])
+
+
+  useEffect(()=>{
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const currentTime = `${hours}:${minutes}`;
+    
+    if(horas.length > 0) {
+      
       let busProximo = null;
       let tiempoMinimo = Infinity;
-
-      location.forEach(bus => {
-        bus.hours.forEach(hours => {
-          const horaBus = hours.hour_name;
-          const tiempo = (new Date(`2000-01-01T${horaBus}:00`) - new Date(`2000-01-01T${time}:00`)) / 1000 / 60;
+      horas.forEach(bus => {
+          const horaBus = bus.hours_name;
+          const tiempo = (new Date(`2000-01-01T${horaBus}:00`) - new Date(`2000-01-01T${currentTime}:00`)) / 1000 / 60;
+          
           if (tiempo >= 0 && tiempo < tiempoMinimo) {
             tiempoMinimo = tiempo;
             busProximo = bus;
           }
-        })
       });
 
+      
       if(busProximo){
-        setNextStop({
-          id:busProximo.busid,
-          hora:busProximo.hora,
-          coordenadas:busProximo.coordenadas
-        })
+        setNextStop(busProximo.hours_name)
       }else{
-        setNextStop({
-          id:1,
-          hora:'05:00',
-          coordenadas:[4.1339803896157195, -73.61317519238939]
-        })
+        setNextStop('05:00')
       }
-
-    }
-    // Encontrar la próxima hora
-
-
   }
-  
+  },[horas])
 
-  useEffect(() => {
+  // useEffect(() => {
     
-    const intervalId = setInterval(() => {
-        const horaActual = `${now.getHours()}:${now.getMinutes()}`;
-        setTime(horaActual);
-    }, 1000);
-
-     hora()
-
-
-    return () => {
-      clearInterval(intervalId);
-    };
+  //   const intervalId = setInterval(() => {
+  //       const horaActual = `${now.getHours()}:${now.getMinutes()}`;
+  //       setTime(horaActual);
+  //   }, 1000);
 
 
 
-  }, [location]);
+  //   return () => {
+  //     clearInterval(intervalId);
+  //   };
+
+
+
+  // }, [location]);
 
 
 
@@ -98,7 +115,7 @@ function Clock() {
 
             <div className='flex items-center p-2'>
               <MdBusAlert className='mr-2 w-8 h-8' />
-              <p>Proxima parada: {nextStop.hora}</p>
+              <p>Proxima parada: {nextStop}</p>
             </div>
 
             {/* <div className='flex items-center p-2'>

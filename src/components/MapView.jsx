@@ -3,17 +3,19 @@ import React from 'react';
 
 import Clock from './Clock';
 import "leaflet/dist/leaflet.css"
-import data from '../../data';
+
 import L from "leaflet";
 import Spinner from './spinner/spinner';
 import ButtonOptions from './auth/Button';
-import GoToPoint from './GoToPoint';
+
+
 
 import useUserContext from "../../hooks/useUser";
 import useLocationContext from '../../hooks/useLocationContext';
 
 import Swal from 'sweetalert2';
 import Welcome from './auth/Welcome';
+
 
 const myIcon = L.icon({
     iconUrl: "https://icones.pro/wp-content/uploads/2021/02/icone-de-broche-de-localisation-rouge.png",
@@ -30,6 +32,8 @@ const myIconParadero = L.icon({
 })
 
 export default function MapView() {
+  
+
   const now = new Date()
 
     const {userLog,setUserLog} = useUserContext();
@@ -40,6 +44,79 @@ export default function MapView() {
     const [modal,setModal] = React.useState(false);
     const [position, setPosition] = React.useState([0,0]);
 
+    const [nextStop,setNextStop] = React.useState()
+    const [horas,setHoras] = React.useState([])
+    const URLH = import.meta.env.VITE_HOST + "/hours"
+
+
+    React.useEffect(()=>{
+        let status = 0
+        let data = []
+        const response = fetch(URLH,{
+            method:'GET'
+        }).then(function(res){
+            status = res.status
+
+            return res.json();
+        }).then(function(datax){
+            if(status !== 200)throw new Error(datax)
+            if(datax.length > 0){
+              setHoras(datax)
+            }
+
+        }).catch(function(error){
+            console.log(error)
+          })
+
+        
+      },[])
+
+    React.useEffect(()=>{
+      if(horas.length > 0){
+        let busProximo = null;
+        let tiempoMinimo = Infinity;
+        
+        horas.forEach(bus => {
+            const horaBus = bus.hours_name;
+            const tiempo = (new Date(`2000-01-01T${horaBus}:00`) - new Date(`2000-01-01T${time}:00`)) / 1000 / 60;
+            if (tiempo >= 0 && tiempo < tiempoMinimo) {
+              tiempoMinimo = tiempo;
+              busProximo = bus;
+            }
+        });
+        
+        if(busProximo){
+          setNextStop(busProximo.hours_name)
+        }else{
+          setNextStop(null)
+        }
+  
+      }
+    },[horas])
+
+    const ProximaParada = (horas) => {
+      
+      if(horas.length > 0){
+        let busProximo = null;
+        let tiempoMinimo = Infinity;
+        horas.forEach(bus => {
+            const horaBus = bus.hour_name;
+            const tiempo = (new Date(`2000-01-01T${horaBus}:00`) - new Date(`2000-01-01T${time}:00`)) / 1000 / 60;
+            
+            if (tiempo >= 0 && tiempo < tiempoMinimo) {
+              tiempoMinimo = tiempo;
+              busProximo = bus;
+            }
+        });
+
+        if(busProximo){
+            return busProximo
+          }
+        }else{
+            return false
+        }
+      }
+    
     
     
     
@@ -132,8 +209,7 @@ export default function MapView() {
             <div className='md:w-1/2 h-screen'>
                 {userLog !== '' && (<Welcome name={userLog.name}/>)}
                 <ButtonOptions/>
-                <Clock/>
-                <GoToPoint/> 
+                {horas.length > 0 ? (<Clock time={time}/>) : null}
                 
                 <MapContainer center={position} zoom={17}>
                   
@@ -158,23 +234,35 @@ export default function MapView() {
                           <>
                           {location.map((item, index) => (
                             <React.Fragment key={index}>
-                              {item.locations.map((it, i) => (
-                                <div key={i}>
-                                  <Marker position={[it?.latitude,it?.longitude]}  icon={myIconParadero}>
-                                    <Popup>
-                                      <p>Ruta: {item?.bus_name}</p>
-                                      <p>Paradero: {it?.location_name}</p>
-                                      <p>Proxima hora: {calculateNextStop(item?.hours)}</p>
-                                    </Popup>
-                                  </Marker>
-                                </div>
-                              ))}
+                              {(()=>{
+                                if(ProximaParada(item?.hours)){
+                                  return(
+                                    <>
+                                      {item.locations.map((it, i) => (
+                                        <div key={i}>
+                                          
+                                            <Marker position={[it?.latitude,it?.longitude]}  icon={myIconParadero}>                                  
+                                            <Popup>
+                                              <p>Ruta: {item?.bus_name}</p>
+                                              <p>Paradero: {it?.location_name}</p>
+                                              <p>Proxima hora: {calculateNextStop(item?.hours)}</p>
+                                            </Popup>
+                                          </Marker>
+                                          
+                                        </div>
+                                      ))}
+                                    </>
+                                  )
+                                }
+                              })()}
+                            
                             </React.Fragment>
                           ))}
                           </>
                         )
                       }
                     })()}
+
 
                 </MapContainer>     
             </div>
