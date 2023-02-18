@@ -108,9 +108,9 @@ export default function MapView() {
               busProximo = bus;
               
             }
+            console.log(time)
             
         });
-        
 
         if(busProximo){
             return busProximo
@@ -143,7 +143,8 @@ export default function MapView() {
     }
     React.useEffect(()=>{
       
-      const horaActual = `${now.getHours()}:${now.getMinutes()}`;
+      const horaActual = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
       setTime(horaActual);
 
       
