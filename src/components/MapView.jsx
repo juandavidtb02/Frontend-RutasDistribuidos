@@ -108,11 +108,10 @@ export default function MapView() {
               busProximo = bus;
               
             }
-            console.log(time)
             
         });
 
-        if(busProximo){
+        if(busProximo.hour_name === nextStop){
             return busProximo
           }
         }else{
