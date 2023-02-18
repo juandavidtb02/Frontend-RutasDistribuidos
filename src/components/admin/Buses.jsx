@@ -4,6 +4,8 @@ import {AiFillEye,AiFillDelete,AiOutlineClose,AiFillEdit} from 'react-icons/ai'
 import {MdMoreTime} from 'react-icons/md'
 import Swal from "sweetalert2";
 import Spinner from "../spinner/spinner";
+import useLocationContext from '../../../hooks/useLocationContext';
+
 export default function Buses(){
     const URL = import.meta.env.VITE_HOST + "/info-buses"
     const URLHoras = import.meta.env.VITE_HOST + "/hours"
@@ -21,6 +23,8 @@ export default function Buses(){
     const [modalHours,setModalHours] = React.useState(false)
     const [modalAddParadero,setModalAddParadero] = React.useState(false)
     const [modalEdit,setModalEdit] = React.useState(false)
+    const {location,setLocation} = useLocationContext();
+
 
     const [peticion,setPeticion] = React.useState(false)
     const [loading,setLoading] = React.useState(true)
@@ -75,6 +79,7 @@ export default function Buses(){
             if(status !== 200)throw new Error(data)
             setRutas(data)
             setLoading(false)
+            setLocation(data)
 
         }).catch(function(error){
             console.log(error)

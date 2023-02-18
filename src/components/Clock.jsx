@@ -70,7 +70,7 @@ function Clock({hora,time}) {
       if(busProximo){
         setNextStop(busProximo.hours_name)
       }else{
-        setNextStop('05:00')
+        setNextStop('No hay más rutas hoy')
       }
   }
   },[horas])

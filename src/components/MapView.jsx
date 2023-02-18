@@ -43,7 +43,7 @@ export default function MapView() {
     const [time, setTime] = React.useState();
     const [modal,setModal] = React.useState(false);
     const [position, setPosition] = React.useState([0,0]);
-
+    
     const [nextStop,setNextStop] = React.useState()
     const [horas,setHoras] = React.useState([])
     const URLH = import.meta.env.VITE_HOST + "/hours"
@@ -84,7 +84,6 @@ export default function MapView() {
               busProximo = bus;
             }
         });
-        
         if(busProximo){
           setNextStop(busProximo.hours_name)
         }else{
@@ -103,11 +102,15 @@ export default function MapView() {
             const horaBus = bus.hour_name;
             const tiempo = (new Date(`2000-01-01T${horaBus}:00`) - new Date(`2000-01-01T${time}:00`)) / 1000 / 60;
             
+
             if (tiempo >= 0 && tiempo < tiempoMinimo) {
               tiempoMinimo = tiempo;
               busProximo = bus;
+              
             }
+            
         });
+        
 
         if(busProximo){
             return busProximo
@@ -139,14 +142,11 @@ export default function MapView() {
           })
     }
     React.useEffect(()=>{
-      const intervalId = setInterval(() => {
-        const horaActual = `${now.getHours()}:${now.getMinutes()}`;
-        setTime(horaActual);
-      }, 1000);
+      
+      const horaActual = `${now.getHours()}:${now.getMinutes()}`;
+      setTime(horaActual);
 
-      return () => {
-        clearInterval(intervalId);
-      };
+      
     },[])
 
     React.useEffect(() => {
